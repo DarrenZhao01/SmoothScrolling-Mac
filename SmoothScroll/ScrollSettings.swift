@@ -35,8 +35,10 @@ final class ScrollSettings {
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         isEnabled = defaults.object(forKey: isEnabledKey) as? Bool ?? ScrollConfiguration.default.isEnabled
-        pixelsPerWheelStep = defaults.object(forKey: pixelsPerWheelStepKey) as? Double ?? ScrollConfiguration.default.pixelsPerWheelStep
-        interpolation = defaults.object(forKey: interpolationKey) as? Double ?? ScrollConfiguration.default.interpolation
+        pixelsPerWheelStep = (defaults.object(forKey: pixelsPerWheelStepKey) as? Double ?? ScrollConfiguration.default.pixelsPerWheelStep)
+            .clamped(to: ScrollConfiguration.pixelsPerWheelStepRange)
+        interpolation = (defaults.object(forKey: interpolationKey) as? Double ?? ScrollConfiguration.default.interpolation)
+            .clamped(to: ScrollConfiguration.interpolationRange)
         reverseVertical = defaults.object(forKey: reverseVerticalKey) as? Bool ?? ScrollConfiguration.default.reverseVertical
         reverseHorizontal = defaults.object(forKey: reverseHorizontalKey) as? Bool ?? ScrollConfiguration.default.reverseHorizontal
     }

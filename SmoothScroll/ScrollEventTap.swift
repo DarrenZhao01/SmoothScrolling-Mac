@@ -8,13 +8,19 @@ import Foundation
 /// stream until the callback returns, so servicing it on a busy main loop stalls
 /// every event queued behind a scroll (including mouse moves). The callback here
 /// only buffers the delta and returns immediately.
+///
+/// A monotonically increasing `generation` token guards the worker lifecycle: a
+/// worker only enables the tap and stores its run loop if its captured
+/// generation still matches. `stop()` bumps the generation, so a worker that has
+/// not yet started running exits without re-enabling an orphaned tap.
 final class ScrollEventTap {
     private let engine: SmoothScrollingEngine
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private var thread: Thread?
     private let stateLock = NSLock()
-    private var threadRunLoop: CFRunLoop?
+    private var thread: Thread?
+    private var activeRunLoop: CFRunLoop?
+    private var generation = 0
 
     init(engine: SmoothScrollingEngine) {
         self.engine = engine
@@ -37,36 +43,48 @@ final class ScrollEventTap {
             try createEventTap()
         }
 
-        guard let eventTap, let runLoopSource else {
+        guard let eventTap, runLoopSource != nil else {
             throw ScrollEventTapError.creationFailed
         }
 
-        guard thread == nil else {
-            CGEvent.tapEnable(tap: eventTap, enable: true)
-            return
+        let alreadyRunning: Bool = stateLock.withLock {
+            if thread != nil {
+                return true
+            }
+
+            generation += 1
+            let gen = generation
+            let worker = Thread { [weak self] in
+                self?.runTapLoop(generation: gen)
+            }
+            worker.name = "com.smooth.ScrollEventTap"
+            worker.qualityOfService = .userInteractive
+            thread = worker
+            worker.start()
+            return false
         }
 
-        let thread = Thread { [weak self] in
-            self?.runTapLoop(source: runLoopSource, tap: eventTap)
+        if alreadyRunning {
+            CGEvent.tapEnable(tap: eventTap, enable: true)
         }
-        thread.name = "com.smooth.ScrollEventTap"
-        thread.qualityOfService = .userInteractive
-        self.thread = thread
-        thread.start()
     }
 
     func stop() {
+        let runLoop: CFRunLoop? = stateLock.withLock {
+            generation += 1
+            let active = activeRunLoop
+            activeRunLoop = nil
+            thread = nil
+            return active
+        }
+
         if let eventTap {
             CGEvent.tapEnable(tap: eventTap, enable: false)
         }
 
-        let runLoop = stateLock.withLock { threadRunLoop }
         if let runLoop {
             CFRunLoopStop(runLoop)
         }
-
-        stateLock.withLock { threadRunLoop = nil }
-        thread = nil
     }
 
     func refreshAfterSystemDisabledTap() {
@@ -98,15 +116,28 @@ private extension ScrollEventTap {
         runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
     }
 
-    func runTapLoop(source: CFRunLoopSource, tap: CFMachPort) {
+    func runTapLoop(generation gen: Int) {
+        guard let eventTap, let runLoopSource else {
+            return
+        }
+
         let runLoop = CFRunLoopGetCurrent()
-        stateLock.withLock { threadRunLoop = runLoop }
+        let proceed: Bool = stateLock.withLock {
+            guard gen == generation else {
+                return false
+            }
+            activeRunLoop = runLoop
+            return true
+        }
 
-        CFRunLoopAddSource(runLoop, source, .commonModes)
-        CGEvent.tapEnable(tap: tap, enable: true)
+        guard proceed else {
+            return
+        }
+
+        CFRunLoopAddSource(runLoop, runLoopSource, .commonModes)
+        CGEvent.tapEnable(tap: eventTap, enable: true)
         CFRunLoopRun()
-
-        CFRunLoopRemoveSource(runLoop, source, .commonModes)
+        CFRunLoopRemoveSource(runLoop, runLoopSource, .commonModes)
     }
 
     static let callback: CGEventTapCallBack = { _, type, event, userInfo in

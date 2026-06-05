@@ -12,6 +12,15 @@ final class SmoothScrollController {
     @ObservationIgnored private let engine = SmoothScrollingEngine()
     @ObservationIgnored private lazy var eventTap = ScrollEventTap(engine: engine)
 
+    init() {
+        // Start from launch rather than relying on the settings window appearing,
+        // so a previously enabled setting resumes even when the app launches into
+        // the menu bar only (e.g. via launch-at-login). Skipped in previews.
+        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" {
+            startIfNeeded()
+        }
+    }
+
     var isRunning: Bool {
         eventTap.isRunning
     }

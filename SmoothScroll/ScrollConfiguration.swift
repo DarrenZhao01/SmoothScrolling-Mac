@@ -9,6 +9,10 @@ struct ScrollConfiguration: Sendable, Equatable {
     var reverseVertical: Bool
     var reverseHorizontal: Bool
 
+    // Valid ranges shared by the UI sliders and persisted-value clamping.
+    static let pixelsPerWheelStepRange: ClosedRange<Double> = 20...240
+    static let interpolationRange: ClosedRange<Double> = 0.05...0.5
+
     static let `default` = ScrollConfiguration(
         isEnabled: false,
         pixelsPerWheelStep: 90,

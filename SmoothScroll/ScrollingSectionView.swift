@@ -8,7 +8,7 @@ struct ScrollingSectionView: View {
             Toggle("Enable smooth scrolling", isOn: $controller.settings.isEnabled)
                 .onChange(of: controller.settings.isEnabled, controller.applySettings)
 
-            Slider(value: $controller.settings.pixelsPerWheelStep, in: 20...240, step: 5) {
+            Slider(value: $controller.settings.pixelsPerWheelStep, in: ScrollConfiguration.pixelsPerWheelStepRange, step: 5) {
                 Text("Pixels per wheel step")
             } minimumValueLabel: {
                 Text("20")
@@ -19,7 +19,7 @@ struct ScrollingSectionView: View {
 
             LabeledContent("Wheel step", value: controller.settings.pixelsPerWheelStep, format: .number.precision(.fractionLength(0)))
 
-            Slider(value: $controller.settings.interpolation, in: 0.05...0.5, step: 0.01) {
+            Slider(value: $controller.settings.interpolation, in: ScrollConfiguration.interpolationRange, step: 0.01) {
                 Text("Smoothing")
             } minimumValueLabel: {
                 Text("Floaty")
