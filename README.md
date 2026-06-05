@@ -1,6 +1,6 @@
 # SmoothScroll
 
-SmoothScroll is a small macOS menu-bar utility that makes discrete mouse-wheel scrolling feel smoother. It intercepts wheel events, converts them into a display-synced stream of small pixel deltas, and leaves trackpad or Magic Mouse scrolling untouched.
+SmoothScroll is a small macOS menu-bar utility that makes mouse-wheel scrolling feel smoother. Free alternative. It intercepts wheel events, converts them into a display-synced stream of small pixel deltas, and leaves trackpad or Magic Mouse scrolling untouched.
 
 This is a personal/local utility, not a packaged app for distribution.
 
