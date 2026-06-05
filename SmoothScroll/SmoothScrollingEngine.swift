@@ -218,7 +218,10 @@ private extension SmoothScrollingEngine {
             return
         }
 
-        event.location = frame.location
+        // Do not set event.location: posting a scroll event with an explicit
+        // location warps the cursor to that point every frame, freezing the
+        // user's pointer for the whole animation. Leaving it unset uses the
+        // current cursor position, which is also the correct scroll target.
         event.flags = frame.flags
         event.setIntegerValueField(.eventSourceUserData, value: Self.syntheticEventMarker)
         event.setIntegerValueField(.scrollWheelEventIsContinuous, value: 1)

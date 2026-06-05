@@ -6,6 +6,7 @@ import Observation
 final class SmoothScrollController {
     var settings = ScrollSettings()
     var permissionState = PermissionManager.currentState()
+    var launchAtLogin = LoginItemManager.isEnabled
     var lastError: String?
 
     @ObservationIgnored private let engine = SmoothScrollingEngine()
@@ -56,6 +57,23 @@ final class SmoothScrollController {
 
     func refreshPermissions() {
         permissionState = PermissionManager.currentState()
+    }
+
+    func applyLaunchAtLogin() {
+        let desired = launchAtLogin
+        guard desired != LoginItemManager.isEnabled else { return }
+
+        do {
+            try LoginItemManager.setEnabled(desired)
+            lastError = nil
+        } catch {
+            lastError = "Could not update Launch at Login: \(error.localizedDescription)"
+        }
+
+        let actual = LoginItemManager.isEnabled
+        if actual != launchAtLogin {
+            launchAtLogin = actual
+        }
     }
 
     func quit() {

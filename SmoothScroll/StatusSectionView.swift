@@ -14,6 +14,9 @@ struct StatusSectionView: View {
                     .foregroundStyle(.red)
             }
 
+            Toggle("Launch at login", isOn: $controller.launchAtLogin)
+                .onChange(of: controller.launchAtLogin, controller.applyLaunchAtLogin)
+
             Button("Request Permissions", action: controller.requestPermissions)
         }
     }

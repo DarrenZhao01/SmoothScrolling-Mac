@@ -15,6 +15,11 @@ struct StatusMenuView: View {
 
         Divider()
 
+        Toggle("Launch at Login", isOn: $controller.launchAtLogin)
+            .onChange(of: controller.launchAtLogin, controller.applyLaunchAtLogin)
+
+        Divider()
+
         Button("Quit SmoothScroll", action: controller.quit)
     }
 }
