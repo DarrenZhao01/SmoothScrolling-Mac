@@ -8,17 +8,20 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Bindable var controller: SmoothScrollController
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        Form {
+            StatusSectionView(controller: controller)
+            ScrollingSectionView(controller: controller)
         }
         .padding()
+        .formStyle(.grouped)
+        .frame(width: 440)
+        .onAppear(perform: controller.startIfNeeded)
     }
 }
 
 #Preview {
-    ContentView()
+    ContentView(controller: SmoothScrollController())
 }
